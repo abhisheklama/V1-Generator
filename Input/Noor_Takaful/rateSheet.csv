@@ -1,0 +1,13 @@
+planName,network,coverage,ageStart,ageEnd,rates,gender,copay,frequency
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,0,45,470,male,20%,Annually
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,0,45,470,female,20%,Annually
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,46,65,815,male,20%,Annually
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,46,65,815,female,20%,Annually
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,66,99,3000,male,20%,Annually
+Plan 1,NAS,UAE excluding Abu Dhabi and Al Ain,66,99,3000,female,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,0,45,585,male,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,0,45,585,female,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,46,65,1030,male,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,46,65,1030,female,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,66,99,3999,male,20%,Annually
+Plan 2,NAS,UAE excluding Abu Dhabi and Al Ain,66,99,3999,female,20%,Annually
