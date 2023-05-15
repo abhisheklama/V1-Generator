@@ -1,9 +1,9 @@
 const xlsx = require("xlsx");
-const planSheet = xlsx.readFile("./Input/william/benefits.xlsx");
-const rate = xlsx.readFile("./Input/william/rateSheet.xlsx");
+const planSheet = xlsx.readFile("./Input/Now_Health/benefits.xlsx");
 let GlobalData = xlsx.utils.sheet_to_json(
   planSheet.Sheets[planSheet.SheetNames[0]]
 );
+const rate = xlsx.readFile("./Input/Now_Health/rateSheet.xlsx");
 let rateSheet = xlsx.utils.sheet_to_json(rate.Sheets[rate.SheetNames[0]]);
 let conversion = 3.6725;
 let fs = require("fs");
@@ -27,13 +27,24 @@ function createSheet() {
         if (v["Plan Name"] == "All") return true;
         return v["Plan Name"] == rate.planName;
       });
+      if (!benefits) {
+        console.log(rate.planName);
+        throw new Error("plan not found");
+      }
       let struc = {
         PlanName1: rate.planName,
         PlanName2: rate.network,
-        rateMonth: parseFloat(rate.monthly) / conversion,
-        rateQuarter: parseFloat(rate.quaterly) / conversion,
-        rateSemiAnnual: parseFloat(rate.semi) / conversion,
-        rateAnnual: parseFloat(rate.rates) / conversion,
+        rateMonth: rate.month,
+        // parseFloat(rate.monthly) / conversion +
+        // parseFloat(rate.dental / 12) / conversion,
+        rateQuarter: "",
+        // parseFloat(rate.quaterly) / conversion +
+        // parseFloat(rate.dental / 4) / conversion,
+        rateSemiAnnual: "",
+        // parseFloat(rate.semi) / conversion +
+        // parseFloat(rate.dental / 2) / conversion,
+        rateAnnual: parseFloat(rate.rates),
+        // parseFloat(rate.dental) / conversion,
         rateBiannual: "",
         ageRangeStart: rate.ageStart,
         ageRangeEnd: rate.ageEnd,
@@ -52,9 +63,9 @@ function createSheet() {
         coPayOn: "",
         deductable: "",
         Terms1: "",
-        Terms2: "",
+        Terms2: rate.term2,
         Terms3: "",
-        Terms4: "",
+        Terms4: rate.dental,
         Terms5: "",
         Terms6: "",
         Terms7: "",
@@ -116,17 +127,45 @@ function createSheet() {
         MonthlySurcharge: benefits["Monthly Surcharge"],
         RoutineMaternityFilter: benefits["Routine Maternity"].toLowerCase(),
         WellnessFilter: benefits["Wellness"].toLowerCase(),
-        OpticalFilter: benefits["Optical"].toLowerCase(),
+        OpticalFilter: benefits["Optical"]?.toLowerCase(),
         CompanyName: GlobalData[0]["companyName"],
         StartDate: GlobalData[0]["startDate"],
-        EndDate: GlobalData[0]["endDate"],
-        Residency: GlobalData[0]["residency"],
-        a1: "",
-        a2: "",
-        dentalFilter: 2,
+        EndDate: "",
+        CJ: "",
+        CK: "",
+        CL: "",
+        CM: benefits["Dental filter"]?.toLowerCase == "yes" ? 0 : "",
+        CN: "",
+        CO: "",
+        CP: "",
+        CQ: "",
+        CR: "",
+        CS: "",
+        CT: "",
+        CU: "",
+        CV: "",
+        CW: "",
+        CX: "",
+        CY: "",
+        CZ: "",
+        DA: "",
+        DB: "",
+        DC: GlobalData[0]["endDate"],
+        Residency:
+          rate.planName == "Essential Opt 1" ||
+          rate.planName == "Essential Opt 2" ||
+          rate.planName == "Essential Opt 3"
+            ? "Northern emirates"
+            : GlobalData[0]["residency"],
+        // a1: "",
+        // a2: "",
+        // dentalFilter: 2,
         // singleFemale:
         //   rate.married == 1 || rate.married == 0 ? rate.married : "",
       };
+      if (GlobalData[0].comment) {
+        struc.OutPatient = struc.OutPatient.replace(GlobalData[0].comment, "");
+      }
       if (struc.OutPatient.includes("$")) {
         let value = GlobalData.find((v) => v.copay.split("/")[0] == rate.copay);
         let copay = value.copay.split("/");
@@ -139,35 +178,64 @@ function createSheet() {
         //     "Medicines and diagnostics & lab tests covered in full Consultations covered with Nil co-pay or 20% co-pay";
         // }
       }
+      if (struc.Physiotherapy.includes("$")) {
+        let value = GlobalData.find((v) => v.copay.split("/")[0] == rate.copay);
+        let copay = value.copay.split("/");
+        // copay.forEach((v, index) => {
+        //   if (index == 0) return;
+        struc.Physiotherapy = struc.Physiotherapy.replace("$", copay[1]);
+        // });
+        // if (rate.copay == "Nil") {
+        //   struc.OutPatient =
+        //     "Medicines and diagnostics & lab tests covered in full Consultations covered with Nil co-pay or 20% co-pay";
+        // }
+      }
       for (let key in struc) {
         while (typeof struc[key] == "string" && struc[key].includes("\n")) {
           struc[key] = struc[key].replace("\n", " ");
         }
       }
       // if (struc.PlanName1 == "Gold") {
-      // struc.Dental = "Dental Plus- Covered up to AED 7,340 with 20% co-pay";
-      // struc.DentalWaitingPeriod = "Dental Plus- 12 months wait";
-      // struc.Dental = "Optional";
-      // struc.DentalWaitingPeriod = "No wait";
+      //   struc.Dental = "Dental Plus- Covered up to AED 7,340 with 20% co-pay";
+      //   struc.DentalWaitingPeriod = "Dental Plus- 12 months wait";
+      //   struc.Dental = "Optional";
+      //   struc.DentalWaitingPeriod = "No wait";
       // } else {
-      // struc.Dental = "Dental Plus- Covered up to AED 5,505 with 20% co-pay";
-      // struc.DentalWaitingPeriod = "Dental Plus- 12 months wait";
-      // struc.Dental = "Optional";
-      // struc.DentalWaitingPeriod = "No wait";
+      //   struc.Dental = "Dental Plus- Covered up to AED 5,505 with 20% co-pay";
+      //   struc.DentalWaitingPeriod = "Dental Plus- 12 months wait";
+      //   struc.Dental = "Optional";
+      //   struc.DentalWaitingPeriod = "No wait";
       // }
 
       return struc;
     });
-    // console.log("count-", arr.length);
-    arr = arr.filter((v) => v.PlanName1 == "Silver");
+    console.log("count-", arr.length);
     let newArr = [];
+    let len = Math.ceil(arr.length / 800);
 
-    for (i = 1; i <= 3; i++) {
-      newArr.push([...arr.splice(0, 800)]);
+    if (arr.length > 800) {
+      for (i = 1; i <= len; i++) {
+        if (i == len) {
+          newArr.push([...arr.splice(0, 800)]);
+          newArr.push([...arr.splice(0, arr.length - 1)]);
+        } else newArr.push([...arr.splice(0, 800)]);
+      }
     }
+    console.log("new-", newArr.length);
 
-    newArr.forEach((v, i) => {
-      jsonToCSV(v, `Output/silver-${i}.csv`)
+    if (newArr.length != 0) {
+      newArr.forEach((v, i) => {
+        jsonToCSV(v, `Output/${GlobalData[0].companyName}-${i}.csv`)
+          .then(() => {
+            console.log("Sheet Generated Successfully!");
+          })
+          .catch((error) => {
+            console.log("Something went wrong");
+            console.log({ err: error });
+          });
+      });
+    } else {
+      jsonToCSV(arr, `Output/${GlobalData[0].companyName}.csv`)
         .then(() => {
           console.log("Sheet Generated Successfully!");
         })
@@ -175,16 +243,7 @@ function createSheet() {
           console.log("Something went wrong");
           console.log({ err: error });
         });
-    });
-
-    // jsonToCSV(arr, `Output/${GlobalData[0].companyName}.csv`)
-    //   .then(() => {
-    //     console.log("Sheet Generated Successfully!");
-    //   })
-    //   .catch((error) => {
-    //     console.log("Something went wrong");
-    //     console.log({ err: error });
-    //   });
+    }
   } catch (error) {
     console.log(error);
     console.log({ err: error.message, stack: error.stack });
