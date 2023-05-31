@@ -1,9 +1,11 @@
 const xlsx = require("xlsx");
-const planSheet = xlsx.readFile("./Input/Now_Health/benefits.xlsx");
+const planSheet = xlsx.readFile(
+  "./Input/Takaful_Mednet(AbuDhabi)/benefits.xlsx"
+);
 let GlobalData = xlsx.utils.sheet_to_json(
   planSheet.Sheets[planSheet.SheetNames[0]]
 );
-const rate = xlsx.readFile("./Input/Now_Health/rateSheet.xlsx");
+const rate = xlsx.readFile("./Input/Takaful_Mednet(AbuDhabi)/rateSheet.xlsx");
 let rateSheet = xlsx.utils.sheet_to_json(rate.Sheets[rate.SheetNames[0]]);
 let conversion = 3.6725;
 let fs = require("fs");
@@ -34,7 +36,7 @@ function createSheet() {
       let struc = {
         PlanName1: rate.planName,
         PlanName2: rate.network,
-        rateMonth: rate.month,
+        rateMonth: "", //rate.month,
         // parseFloat(rate.monthly) / conversion +
         // parseFloat(rate.dental / 12) / conversion,
         rateQuarter: "",
@@ -43,7 +45,7 @@ function createSheet() {
         rateSemiAnnual: "",
         // parseFloat(rate.semi) / conversion +
         // parseFloat(rate.dental / 2) / conversion,
-        rateAnnual: parseFloat(rate.rates),
+        rateAnnual: parseFloat(rate.rates) / conversion,
         // parseFloat(rate.dental) / conversion,
         rateBiannual: "",
         ageRangeStart: rate.ageStart,
@@ -63,9 +65,9 @@ function createSheet() {
         coPayOn: "",
         deductable: "",
         Terms1: "",
-        Terms2: rate.term2,
+        Terms2: "", //rate.term2,
         Terms3: "",
-        Terms4: rate.dental,
+        Terms4: "", //rate.dental,
         Terms5: "",
         Terms6: "",
         Terms7: "",
@@ -134,7 +136,7 @@ function createSheet() {
         CJ: "",
         CK: "",
         CL: "",
-        CM: benefits["Dental filter"]?.toLowerCase == "yes" ? 0 : "",
+        CM: "", //benefits["Dental filter"]?.toLowerCase == "yes" ? 0 : "",
         CN: "",
         CO: "",
         CP: "",
@@ -151,18 +153,17 @@ function createSheet() {
         DA: "",
         DB: "",
         DC: GlobalData[0]["endDate"],
-        Residency:
-          rate.planName == "Essential Opt 1" ||
-          rate.planName == "Essential Opt 2" ||
-          rate.planName == "Essential Opt 3"
-            ? "Northern emirates"
-            : GlobalData[0]["residency"],
+        Residency: GlobalData[0]["residency"],
+        relation: rate.relation ? rate.relation.toLowerCase() : "",
         // a1: "",
         // a2: "",
         // dentalFilter: 2,
         // singleFemale:
         //   rate.married == 1 || rate.married == 0 ? rate.married : "",
       };
+      // struc.Dental =
+      //   "Routine dental- Covered up to USD 250 with 20% co-pay Complex dental- Covered up to USD 1,000 with 20% co-pay";
+      // struc.DentalWaitingPeriod = "9 months wait";
       if (GlobalData[0].comment) {
         struc.OutPatient = struc.OutPatient.replace(GlobalData[0].comment, "");
       }
