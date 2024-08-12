@@ -1,11 +1,9 @@
 const xlsx = require("xlsx");
-const planSheet = xlsx.readFile(
-  "./Input/Takaful_Mednet(AbuDhabi)/benefits.xlsx"
-);
+const planSheet = xlsx.readFile("./Input/Medgulf_Medex/benefit.xlsx");
 let GlobalData = xlsx.utils.sheet_to_json(
   planSheet.Sheets[planSheet.SheetNames[0]]
 );
-const rate = xlsx.readFile("./Input/Takaful_Mednet(AbuDhabi)/rateSheet.xlsx");
+const rate = xlsx.readFile("./Input/Medgulf_Medex/rateSheet.xlsx");
 let rateSheet = xlsx.utils.sheet_to_json(rate.Sheets[rate.SheetNames[0]]);
 let conversion = 3.6725;
 let fs = require("fs");
@@ -14,7 +12,10 @@ const jsonToCSV = require("json-to-csv");
 function createSheet() {
   try {
     let annual = rateSheet.filter((v) => v.frequency == "Annually");
-    let arr = annual.map((rate) => {
+    let arr = annual.map((rate, i) => {
+      // if (rate.copay == "0.1") rate.copay = "10%";
+      // if (rate.copay == "0.2") rate.copay = "20%";
+
       // let quater = rateSheet.find(
       //   (v) =>
       //     v.frequency == "Quarterly" &&
@@ -33,13 +34,21 @@ function createSheet() {
         console.log(rate.planName);
         throw new Error("plan not found");
       }
+      for (let key in benefits) {
+        if (
+          benefits[key] &&
+          benefits[key].toString().toLowerCase().includes("nishima")
+        )
+          throw new Error("Nishma ALERT!!!!!!!!!!!!!!!!");
+      }
+
       let struc = {
         PlanName1: rate.planName,
         PlanName2: rate.network,
         rateMonth: "", //rate.month,
         // parseFloat(rate.monthly) / conversion +
         // parseFloat(rate.dental / 12) / conversion,
-        rateQuarter: "",
+        rateQuarter: "", //parseFloat(quater.rates) / conversion,
         // parseFloat(rate.quaterly) / conversion +
         // parseFloat(rate.dental / 4) / conversion,
         rateSemiAnnual: "",
@@ -65,7 +74,7 @@ function createSheet() {
         coPayOn: "",
         deductable: "",
         Terms1: "",
-        Terms2: "", //rate.term2,
+        Terms2: "",
         Terms3: "",
         Terms4: "", //rate.dental,
         Terms5: "",
@@ -135,8 +144,8 @@ function createSheet() {
         EndDate: "",
         CJ: "",
         CK: "",
-        CL: "",
-        CM: "", //benefits["Dental filter"]?.toLowerCase == "yes" ? 0 : "",
+        CL: rate?.type ? rate.type : "",
+        CM: benefits["Dental Filter"]?.toLowerCase() == "yes" || true ? 0 : "",
         CN: "",
         CO: "",
         CP: "",
@@ -151,15 +160,17 @@ function createSheet() {
         CY: "",
         CZ: "",
         DA: "",
-        DB: "",
+        AccommodationType: benefits["Accommodation Type"],
         DC: GlobalData[0]["endDate"],
-        Residency: GlobalData[0]["residency"],
-        relation: rate.relation ? rate.relation.toLowerCase() : "",
-        // a1: "",
-        // a2: "",
-        // dentalFilter: 2,
-        // singleFemale:
-        //   rate.married == 1 || rate.married == 0 ? rate.married : "",
+        Residency: rate.residency ?? GlobalData[0]["residency"],
+        relation: rate.relation ? rate.relation : "",
+        singleFemale:
+          rate.married == 1 || rate.married == -1 || rate.married == 0
+            ? rate.married
+            : "",
+        singleChild: "",
+        dentalAddon:
+          rate.dental && false ? parseFloat(rate.dental) / conversion : "",
       };
       // struc.Dental =
       //   "Routine dental- Covered up to USD 250 with 20% co-pay Complex dental- Covered up to USD 1,000 with 20% co-pay";
@@ -168,9 +179,13 @@ function createSheet() {
         struc.OutPatient = struc.OutPatient.replace(GlobalData[0].comment, "");
       }
       if (struc.OutPatient.includes("$")) {
-        let value = GlobalData.find((v) => v.copay.split("/")[0] == rate.copay);
+        let value = GlobalData.find(
+          (v) => v?.copay?.split("/")[0] == rate.copay
+        );
+        if (!value) console.log("rate.copay --> ", rate.copay, i);
         let copay = value.copay.split("/");
         copay.forEach((v, index) => {
+          ``;
           if (index == 0) return;
           struc.OutPatient = struc.OutPatient.replace("$", v);
         });
@@ -210,6 +225,7 @@ function createSheet() {
 
       return struc;
     });
+
     console.log("count-", arr.length);
     let newArr = [];
     let len = Math.ceil(arr.length / 800);
@@ -226,7 +242,14 @@ function createSheet() {
 
     if (newArr.length != 0) {
       newArr.forEach((v, i) => {
-        jsonToCSV(v, `Output/${GlobalData[0].companyName}-${i}.csv`)
+        jsonToCSV(
+          v,
+          `Output/${GlobalData[0].companyName}-${i}-${
+            GlobalData[0].residency.includes("- ")
+              ? GlobalData[0].residency.split("- ")[1]
+              : GlobalData[0].residency
+          }.csv`
+        )
           .then(() => {
             console.log("Sheet Generated Successfully!");
           })
@@ -236,7 +259,14 @@ function createSheet() {
           });
       });
     } else {
-      jsonToCSV(arr, `Output/${GlobalData[0].companyName}.csv`)
+      jsonToCSV(
+        arr,
+        `Output/${GlobalData[0].companyName}-${
+          GlobalData[0].residency.includes("- ")
+            ? GlobalData[0].residency.split("- ")[1]
+            : GlobalData[0].residency
+        }.csv`
+      )
         .then(() => {
           console.log("Sheet Generated Successfully!");
         })
